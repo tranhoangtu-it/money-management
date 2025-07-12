@@ -21,7 +21,7 @@ public class Transaction
     public string Description { get; set; } = string.Empty;
 
     [Required]
-    public DateTime TransactionDate { get; set; }
+    public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

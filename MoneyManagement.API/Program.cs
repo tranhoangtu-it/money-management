@@ -18,17 +18,30 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IJarService, JarService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 
-// Add CORS
+// Add CORS with secure configuration
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
+    options.AddPolicy("AllowedOrigins",
         builder =>
         {
-            builder.AllowAnyOrigin()
+            builder.WithOrigins("https://localhost:3000", "http://localhost:3000") // Add specific allowed origins
                    .AllowAnyMethod()
-                   .AllowAnyHeader();
+                   .AllowAnyHeader()
+                   .AllowCredentials();
         });
 });
+
+// Add response compression
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+});
+
+// Add memory caching
+builder.Services.AddMemoryCache();
+
+// Add logging
+builder.Services.AddLogging();
 
 var app = builder.Build();
 
@@ -38,15 +51,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+app.UseResponseCompression();
+app.UseCors("AllowedOrigins");
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

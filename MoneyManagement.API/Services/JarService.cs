@@ -18,6 +18,17 @@ public class JarService : IJarService
         return await _context.Jars.ToListAsync();
     }
 
+    public async Task<PaginatedResult<Jar>> GetJarsAsync(PaginationParameters paginationParameters)
+    {
+        var totalCount = await _context.Jars.CountAsync();
+        var jars = await _context.Jars
+            .Skip((paginationParameters.Page - 1) * paginationParameters.PageSize)
+            .Take(paginationParameters.PageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<Jar>(jars, paginationParameters.Page, paginationParameters.PageSize, totalCount);
+    }
+
     public async Task<Jar?> GetJarByIdAsync(int id)
     {
         return await _context.Jars.FindAsync(id);

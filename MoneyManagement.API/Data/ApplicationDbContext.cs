@@ -42,6 +42,27 @@ public class ApplicationDbContext : DbContext
             .Property(t => t.Amount)
             .HasPrecision(18, 2);
 
+        // Add indexes for better performance
+        modelBuilder.Entity<Transaction>()
+            .HasIndex(t => t.TransactionDate)
+            .HasDatabaseName("IX_Transaction_TransactionDate");
+
+        modelBuilder.Entity<Transaction>()
+            .HasIndex(t => t.SourceJarId)
+            .HasDatabaseName("IX_Transaction_SourceJarId");
+
+        modelBuilder.Entity<Transaction>()
+            .HasIndex(t => t.DestinationJarId)
+            .HasDatabaseName("IX_Transaction_DestinationJarId");
+
+        modelBuilder.Entity<Transaction>()
+            .HasIndex(t => new { t.SourceJarId, t.DestinationJarId })
+            .HasDatabaseName("IX_Transaction_SourceDestination");
+
+        modelBuilder.Entity<Jar>()
+            .HasIndex(j => j.Name)
+            .HasDatabaseName("IX_Jar_Name");
+
         // Seed initial jars
         modelBuilder.Entity<Jar>().HasData(
             new Jar { Id = 1, Name = "Necessities", Percentage = 50, Description = "Essential expenses like housing, utilities, groceries", CurrentBalance = 0 },

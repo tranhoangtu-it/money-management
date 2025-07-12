@@ -5,6 +5,7 @@ namespace MoneyManagement.API.Services;
 public interface IJarService
 {
     Task<IEnumerable<Jar>> GetAllJarsAsync();
+    Task<PaginatedResult<Jar>> GetJarsAsync(PaginationParameters paginationParameters);
     Task<Jar?> GetJarByIdAsync(int id);
     Task<Jar> CreateJarAsync(Jar jar);
     Task<Jar> UpdateJarAsync(int id, Jar jar);

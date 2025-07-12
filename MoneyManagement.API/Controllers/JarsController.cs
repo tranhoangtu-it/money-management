@@ -22,6 +22,13 @@ public class JarsController : ControllerBase
         return Ok(jars);
     }
 
+    [HttpGet("paged")]
+    public async Task<ActionResult<PaginatedResult<Jar>>> GetJarsPaged([FromQuery] PaginationParameters paginationParameters)
+    {
+        var jars = await _jarService.GetJarsAsync(paginationParameters);
+        return Ok(jars);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<Jar>> GetJar(int id)
     {
@@ -80,6 +87,9 @@ public class JarsController : ControllerBase
     [HttpPost("{id}/add")]
     public async Task<ActionResult<Jar>> AddMoney(int id, [FromBody] decimal amount)
     {
+        if (amount <= 0)
+            return BadRequest("Amount must be greater than zero");
+
         try
         {
             var updatedJar = await _jarService.AddMoneyToJarAsync(id, amount);
@@ -87,13 +97,20 @@ public class JarsController : ControllerBase
         }
         catch (KeyNotFoundException)
         {
-            return NotFound();
+            return NotFound($"Jar with ID {id} not found");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
 
     [HttpPost("{id}/remove")]
     public async Task<ActionResult<Jar>> RemoveMoney(int id, [FromBody] decimal amount)
     {
+        if (amount <= 0)
+            return BadRequest("Amount must be greater than zero");
+
         try
         {
             var updatedJar = await _jarService.RemoveMoneyFromJarAsync(id, amount);
@@ -101,11 +118,15 @@ public class JarsController : ControllerBase
         }
         catch (KeyNotFoundException)
         {
-            return NotFound();
+            return NotFound($"Jar with ID {id} not found");
         }
         catch (InvalidOperationException ex)
         {
             return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
 } 

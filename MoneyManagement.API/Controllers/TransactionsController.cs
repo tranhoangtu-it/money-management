@@ -22,6 +22,13 @@ public class TransactionsController : ControllerBase
         return Ok(transactions);
     }
 
+    [HttpGet("paged")]
+    public async Task<ActionResult<PaginatedResult<Transaction>>> GetTransactionsPaged([FromQuery] PaginationParameters paginationParameters)
+    {
+        var transactions = await _transactionService.GetTransactionsAsync(paginationParameters);
+        return Ok(transactions);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<Transaction>> GetTransaction(int id)
     {
@@ -46,6 +53,12 @@ public class TransactionsController : ControllerBase
         [FromQuery] decimal amount,
         [FromQuery] string description)
     {
+        if (amount <= 0)
+            return BadRequest("Amount must be greater than zero");
+
+        if (string.IsNullOrWhiteSpace(description))
+            return BadRequest("Description is required");
+
         try
         {
             var transaction = await _transactionService.TransferMoneyAsync(sourceJarId, destinationJarId, amount, description);
@@ -55,25 +68,37 @@ public class TransactionsController : ControllerBase
         {
             return NotFound("One or both jars not found");
         }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(ex.Message);
         }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
     }
 
     [HttpGet("jar/{jarId}")]
-    public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactionsByJar(int jarId)
+    public async Task<ActionResult<PaginatedResult<Transaction>>> GetTransactionsByJar(int jarId, [FromQuery] PaginationParameters paginationParameters)
     {
-        var transactions = await _transactionService.GetTransactionsByJarIdAsync(jarId);
+        var transactions = await _transactionService.GetTransactionsByJarIdAsync(jarId, paginationParameters);
         return Ok(transactions);
     }
 
     [HttpGet("daterange")]
-    public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactionsByDateRange(
+    public async Task<ActionResult<PaginatedResult<Transaction>>> GetTransactionsByDateRange(
         [FromQuery] DateTime startDate,
-        [FromQuery] DateTime endDate)
+        [FromQuery] DateTime endDate,
+        [FromQuery] PaginationParameters paginationParameters)
     {
-        var transactions = await _transactionService.GetTransactionsByDateRangeAsync(startDate, endDate);
+        if (startDate > endDate)
+            return BadRequest("Start date cannot be later than end date");
+
+        var transactions = await _transactionService.GetTransactionsByDateRangeAsync(startDate, endDate, paginationParameters);
         return Ok(transactions);
     }
 } 
